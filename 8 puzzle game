@@ -1,0 +1,50 @@
+goal = [[1,2,3],[4,5,6],[7,8,0]]
+directions = [(-1,0),(1,0),(0,-1),(0,1)]
+
+def find_blank(board):
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == 0:
+                return i, j
+
+def is_valid(x,y):
+    return 0 <= x < 3 and 0 <= y < 3
+
+def solve(board, visited, path, max_depth):
+    if board == goal:
+        return True
+    if len(path) > max_depth:
+        return False
+    x, y = find_blank(board)
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        if is_valid(nx, ny):
+            new_board = [row[:] for row in board]
+            new_board[x][y], new_board[nx][ny] = new_board[nx][ny], new_board[x][y]
+            t = tuple(tuple(row) for row in new_board)
+            if t not in visited:
+                visited.add(t)
+                path.append(new_board)
+                if solve(new_board, visited, path, max_depth):
+                    return True
+                path.pop()
+                visited.remove(t)
+    return False
+
+start = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [0, 7, 8]
+]
+
+visited = {tuple(tuple(row) for row in start)}
+path = [start]
+
+if solve(start, visited, path, max_depth=4):
+    print("Solution found in", len(path)-1, "moves:")
+    for step in path:
+        for row in step:
+            print(row)
+        print()
+else:
+    print("No solution found within 4 moves.")
