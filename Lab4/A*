@@ -1,0 +1,93 @@
+import heapq
+
+goal_state = [
+    [1, 2, 3],
+    [5, 0, 6],
+    [4, 7, 8]
+]
+
+def manhattan_distance(state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            value = state[i][j]
+            if value != 0:
+                goal_i, goal_j = (value - 1) // 3, (value - 1) % 3
+                distance += abs(i - goal_i) + abs(j - goal_j)
+    return distance
+
+def displaced_tiles(state):
+    displaced = 0
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] != 0 and state[i][j] != goal_state[i][j]:
+                displaced += 1
+    return displaced
+
+def heuristic(state):
+    return displaced_tiles(state) + manhattan_distance(state)
+
+def find_blank(state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def get_neighbors(state):
+    neighbors = []
+    blank_i, blank_j = find_blank(state)
+    moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    for move in moves:
+        new_i, new_j = blank_i + move[0], blank_j + move[1]
+        if 0 <= new_i < 3 and 0 <= new_j < 3:
+            new_state = [row[:] for row in state]
+            new_state[blank_i][blank_j], new_state[new_i][new_j] = new_state[new_i][new_j], new_state[blank_i][blank_j]
+            neighbors.append(new_state)
+    return neighbors
+
+def a_star(start_state):
+    open_list = []
+    heapq.heappush(open_list, (heuristic(start_state), 0, start_state))
+    closed_list = set()
+    while open_list:
+        f, g, current_state = heapq.heappop(open_list)
+        if current_state == goal_state:
+            return g
+        closed_list.add(tuple(map(tuple, current_state)))
+        for neighbor in get_neighbors(current_state):
+            if tuple(map(tuple, neighbor)) not in closed_list:
+                g_new = g + 1
+                h_new = heuristic(neighbor)
+                f_new = g_new + h_new
+                heapq.heappush(open_list, (f_new, g_new, neighbor))
+    return None
+
+def print_state_tree(start_state):
+    open_list = []
+    heapq.heappush(open_list, (heuristic(start_state), 0, start_state, []))
+    closed_list = set()
+    while open_list:
+        f, g, current_state, path = heapq.heappop(open_list)
+        if current_state == goal_state:
+            print("Solution found in", g, "moves.")
+            print("State space tree:")
+            for step in path + [current_state]:
+                for row in step:
+                    print(row)
+                print()
+            return
+        closed_list.add(tuple(map(tuple, current_state)))
+        for neighbor in get_neighbors(current_state):
+            if tuple(map(tuple, neighbor)) not in closed_list:
+                g_new = g + 1
+                h_new = heuristic(neighbor)
+                f_new = g_new + h_new
+                heapq.heappush(open_list, (f_new, g_new, neighbor, path + [current_state]))
+
+start_state = [
+    [1, 2, 3],
+    [4, 0, 6],
+    [7, 5, 8]
+]
+
+print_state_tree(start_state)
