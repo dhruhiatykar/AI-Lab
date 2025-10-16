@@ -1,0 +1,61 @@
+from sympy import symbols
+from sympy.logic.boolalg import Implies, Or, Not, And
+from itertools import product
+from prettytable import PrettyTable  # pip install prettytable
+
+# Define symbols
+P, Q, R = symbols('P Q R')
+
+# Define Knowledge Base sentences
+S1 = Implies(Q, P)     # Q → P
+S2 = Implies(P, Not(Q))# P → ¬Q
+S3 = Or(Q, R)          # Q ∨ R
+
+KB = [S1, S2, S3]
+
+# Function to evaluate expression
+def eval_expr(expr, Pval, Qval, Rval):
+    return bool(expr.subs({P: Pval, Q: Qval, R: Rval}))
+
+# Prepare truth table
+table = PrettyTable()
+table.field_names = ["P", "Q", "R", "Q→P", "P→¬Q", "Q∨R", "KB True?"]
+
+models = []
+
+for Pval, Qval, Rval in product([False, True], repeat=3):
+    s1 = eval_expr(S1, Pval, Qval, Rval)
+    s2 = eval_expr(S2, Pval, Qval, Rval)
+    s3 = eval_expr(S3, Pval, Qval, Rval)
+    kb_true = s1 and s2 and s3
+    if kb_true:
+        models.append((Pval, Qval, Rval))
+    table.add_row([Pval, Qval, Rval, s1, s2, s3, kb_true])
+
+print("=== TRUTH TABLE ===")
+print(table)
+print("\nModels where KB is TRUE:")
+for m in models:
+    print(f"P={m[0]}, Q={m[1]}, R={m[2]}")
+
+def entails(KB, query):
+    for Pval, Qval, Rval in product([False, True], repeat=3):
+        s1 = eval_expr(S1, Pval, Qval, Rval)
+        s2 = eval_expr(S2, Pval, Qval, Rval)
+        s3 = eval_expr(S3, Pval, Qval, Rval)
+        kb_true = s1 and s2 and s3
+        if kb_true:
+            if not eval_expr(query, Pval, Qval, Rval):
+                return False
+    return True
+
+queries = {
+    "R": R,
+    "R→P": Implies(R, P),
+    "Q→R": Implies(Q, R)
+}
+
+print("\n=== ENTAILMENT CHECK ===")
+for qname, qexpr in queries.items():
+    result = entails(KB, qexpr)
+    print(f"Does KB entail {qname}?  {'✅ YES' if result else '❌ NO'}")
